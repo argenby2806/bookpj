@@ -9,6 +9,7 @@ namespace bookpj.Extension
         {
         }
         public DbSet<Book> Books { get; set; }
+        public DbSet<User> Users { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -28,13 +29,6 @@ namespace bookpj.Extension
              entity.Property(b => b.IsAvailable)
                 .HasDefaultValue(true);
 
-             entity.Property(b => b.BorrowedAT)
-                   .HasColumnType("datetime")                //ép kiểu dữ liệu datetime
-                   .HasDefaultValueSql("GETDATE()");           //sql lấy ngày giờ hiện tại 
-
-             entity.Property(b => b.DueDate)
-                   .HasColumnType("datetime")
-                   .IsRequired();
             });
         }
     }

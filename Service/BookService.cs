@@ -1,12 +1,9 @@
 ﻿using bookpj.DTO;
 using bookpj.Entities;
 using bookpj.Repository;
-using bookpj.Service;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace bookpj.Services
+namespace bookpj.Service
 {
     public class BookService : IBookService
     {
@@ -27,18 +24,16 @@ namespace bookpj.Services
 
                 return books.Select(x => new BookDTO
                 {
-                    Id = x.Id,
+                    BookId = x.BookId,
                     Title = x.Title,
                     Author = x.Author,
                     Price = x.Price,
-                    IsAvailable = x.IsAvailable,
-                    BorrowedAT = x.BorrowedAT,
-                    DueDate = x.DueDate
+                    IsAvailable = x.IsAvailable
                 }).ToList();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi xảy ra tại GetAllAsync trong BookService");
+                _logger.LogError(ex, "Lỗi xảy ra khi lấy danh sách");
                 throw;
             }
         }
@@ -52,18 +47,16 @@ namespace bookpj.Services
 
                 return new BookDTO
                 {
-                    Id = book.Id,
+                    BookId = book.BookId,
                     Title = book.Title,
                     Author = book.Author,
                     Price = book.Price,
-                    IsAvailable = book.IsAvailable,
-                    BorrowedAT = book.BorrowedAT,
-                    DueDate = book.DueDate
+                    IsAvailable = book.IsAvailable
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi xảy ra tại GetByIdAsync với ID: {Id}", id);
+                _logger.LogError(ex, "Lỗi xảy ra khi lấy danh sách với id: {Id}", id);
                 throw;
             }
         }
@@ -80,9 +73,7 @@ namespace bookpj.Services
                     Title = dto.Title,
                     Author = dto.Author,
                     Price = dto.Price,
-                    IsAvailable = true,
-                    BorrowedAT = DateTime.Now,
-                    DueDate = DateTime.Now.AddDays(14) 
+                    IsAvailable = true
                 };
 
                 await _bookRepository.AddAsync(book);
@@ -109,8 +100,6 @@ namespace bookpj.Services
                 book.Author = dto.Author;
                 book.Price = dto.Price;
                 book.IsAvailable = dto.IsAvailable;
-                book.BorrowedAT = dto.BorrowedAT;
-                book.DueDate = dto.DueDate;
 
                 _bookRepository.Update(book);
                 return await _bookRepository.SaveChangesAsync();

@@ -21,7 +21,7 @@ namespace bookpj.Repository
 
         public async Task<Book?> GetByIdAsync(int id)
         {
-            return await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
+            return await _context.Books.FirstOrDefaultAsync(b => b.BookId == id);
         }
 
         public async Task AddAsync(Book book)

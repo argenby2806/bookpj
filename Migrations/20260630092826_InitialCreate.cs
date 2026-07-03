@@ -21,8 +21,6 @@ namespace bookpj.Migrations
                     Author = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
                     Price = table.Column<decimal>(type: "decimal(18,0)", nullable: false, defaultValue: 0m),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    BorrowedAT = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "GETDATE()"),
-                    DueDate = table.Column<DateTime>(type: "datetime", nullable: false)
                 },
                 constraints: table =>
                 {
