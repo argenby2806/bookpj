@@ -1,42 +1,41 @@
 ﻿using bookpj.DTO;
 using bookpj.Extensions;
 using bookpj.Service;
-using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
-namespace bookpj.Controllers.Book
+namespace bookpj.Controllers.Order
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BookController : ControllerBase
+    public class OrderController : ControllerBase
     {
-        private readonly IBookService _service;
-        private readonly ILogger<BookController> _logger;
-        private readonly string _methods = nameof(BookController);
+        private readonly IOrderService _service;
+        private readonly ILogger<OrderController> _logger;
+        private readonly string _methods = nameof(OrderController);
 
-        public BookController(IBookService bookService, ILogger<BookController> logger)
+        public OrderController(IOrderService orderService, ILogger<OrderController> logger)
         {
-            _service = bookService;
+            _service = orderService;
             _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            _logger.LogRequest(_methods); 
+            _logger.LogRequest(_methods);
             var result = await _service.GetAllAsync();
 
-            _logger.LogResponse(_methods, result); 
+            _logger.LogResponse(_methods, result);
             return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            _logger.LogRequest(_methods, id); 
+            _logger.LogRequest(_methods, id);
             var result = await _service.GetByIdAsync(id);
 
             if (result == null)
@@ -50,49 +49,54 @@ namespace bookpj.Controllers.Book
         }
 
         [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Create([FromBody] CreateBookDTO dto)
+        //[Authorize]
+        public async Task<IActionResult> Create([FromBody] CreateOrderDTO dto)
         {
             _logger.LogRequest(_methods, dto);
 
             var success = await _service.CreateAsync(dto);
             if (!success)
             {
-                _logger.LogResponse(_methods, "Validation failed or create failed");
-                return BadRequest(new { Message = "Dữ liệu không hợp lệ hoặc tạo thất bại." });
+                _logger.LogResponse(_methods, "Create failed");
+                return BadRequest(new { Message = "Tạo đơn hàng thất bại." });
             }
 
             _logger.LogResponse(_methods);
-            return Ok();
+            return StatusCode(StatusCodes.Status201Created);
         }
 
         [HttpPut("{id}")]
-        [Authorize]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateBookDTO dto)
+        //[Authorize]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateOrderDTO dto)
         {
             _logger.LogRequest(_methods, new { id, dto });
 
             var success = await _service.UpdateAsync(id, dto);
             if (!success)
             {
-                _logger.LogResponse(_methods, "Validation failed or update failed");
-                return BadRequest(new { Message = "Dữ liệu không hợp lệ hoặc cập nhật thất bại." });
+                _logger.LogResponse(_methods, "Not Found or update failed");
+                return NotFound(new { Message = "Không tìm thấy đơn hàng hoặc cập nhật thất bại." });
             }
 
             _logger.LogResponse(_methods);
-            return Ok();
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> Delete(int id)
         {
             _logger.LogRequest(_methods, id);
 
-            await _service.DeleteAsync(id);
+            var success = await _service.DeleteAsync(id);
+            if (!success)
+            {
+                _logger.LogResponse(_methods, "Not Found");
+                return NotFound();
+            }
 
             _logger.LogResponse(_methods);
-            return Ok();
+            return NoContent();
         }
     }
 }

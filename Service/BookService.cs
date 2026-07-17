@@ -2,6 +2,7 @@
 using bookpj.Entities;
 using bookpj.Repository;
 using System.Text.Json;
+using FluentValidation;
 
 namespace bookpj.Service
 {
@@ -9,11 +10,16 @@ namespace bookpj.Service
     {
         private readonly IBookRepository _bookRepository;
         private readonly ILogger<BookService> _logger;
+        private readonly IValidator<Book> _bookValidator;
 
-        public BookService(IBookRepository bookRepository, ILogger<BookService> logger)
-        {
+        public BookService(
+            IBookRepository bookRepository,
+            ILogger<BookService> logger,
+            IValidator<Book> bookValidator)
+        {   
             _bookRepository = bookRepository;
             _logger = logger;
+            _bookValidator = bookValidator;
         }
 
         public async Task<List<BookDTO>> GetAllAsync()
@@ -66,8 +72,6 @@ namespace bookpj.Service
             var dtoJson = JsonSerializer.Serialize(dto);
             try
             {
-                if (dto.Price < 0) throw new ArgumentException("Giá sách không được nhỏ hơn 0");
-
                 var book = new Book
                 {
                     Title = dto.Title,
@@ -76,8 +80,24 @@ namespace bookpj.Service
                     IsAvailable = true
                 };
 
+                var validation = await _bookValidator.ValidateAsync(book);
+                if (!validation.IsValid)
+                {
+                    throw new ValidationException(validation.Errors);
+                }
+
+                if (book.Price < 0)
+                {
+                    _logger.LogWarning("Giá sách không hợp lệ (âm): {Price}", book.Price);
+                    throw new ArgumentException("Giá sách không được nhỏ hơn 0");
+                }
+
                 await _bookRepository.AddAsync(book);
                 return await _bookRepository.SaveChangesAsync();
+            }
+            catch (ValidationException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -85,6 +105,7 @@ namespace bookpj.Service
                 throw new Exception(ex.ToString());
             }
         }
+
 
         public async Task<bool> UpdateAsync(int id, UpdateBookDTO dto)
         {
@@ -94,15 +115,29 @@ namespace bookpj.Service
                 var book = await _bookRepository.GetByIdAsync(id);
                 if (book == null) return false;
 
-                if (dto.Price < 0) throw new ArgumentException("Giá sách không hợp lệ");
-
                 book.Title = dto.Title;
                 book.Author = dto.Author;
                 book.Price = dto.Price;
                 book.IsAvailable = dto.IsAvailable;
 
+                var validation = await _bookValidator.ValidateAsync(book);
+                if (!validation.IsValid)
+                {
+                    throw new ValidationException(validation.Errors);
+                }
+
+                if (book.Price < 0)
+                {
+                    _logger.LogWarning("Giá sách không hợp lệ khi cập nhật id {Id}: {Price}", id, book.Price);
+                    throw new ArgumentException("Giá sách không hợp lệ");
+                }
+
                 _bookRepository.Update(book);
                 return await _bookRepository.SaveChangesAsync();
+            }
+            catch (ValidationException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
